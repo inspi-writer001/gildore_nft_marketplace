@@ -60,7 +60,7 @@ impl<'info> ListNFT<'info> {
     pub fn initialize_listing(&mut self, price: u64, bumps: &ListNFTBumps) -> Result<()> {
         self.listing.set_inner(Listing {
             seller: self.seller.key(),
-            mint: self.asset.key(), // Using asset key instead of mint
+            mint: self.asset.key(), 
             price,
             bump: bumps.listing,
             is_active: true,
@@ -74,7 +74,7 @@ impl<'info> ListNFT<'info> {
             .asset(&self.asset.to_account_info())
             .payer(&self.seller.to_account_info())
             .authority(Some(&self.seller.to_account_info()))
-            .new_owner(&self.listing.to_account_info())
+            .new_owner(&self.escrow.to_account_info())
             .system_program(Some(&self.system_program.to_account_info()))
             .invoke()?;
 
