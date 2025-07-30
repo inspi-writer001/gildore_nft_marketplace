@@ -46,13 +46,6 @@ impl<'info> UpdateNFTMetadata<'info> {
             .payer(&authority)
             .authority(Some(&authority))
             .system_program(&system_prog)
-            .collection(match &self.collection.clone() {
-                Some(exists) => {
-                    let c_collection = exists.to_account_info();
-                    Some(&c_collection)
-                }
-                None => None,
-            })
             .new_name(match params.name {
                 Some(name_provided) => name_provided,
                 None => String::new(),
