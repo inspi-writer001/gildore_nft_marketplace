@@ -15,7 +15,11 @@ Gildore democratizes access to precious metals using Web3 tools, allowing:
 
 Each NFT represents real, physical **gold or silver** securely stored by licensed vault partners, with full transparency and blockchain-backed verification.
 
-### 📂 [Architecture Diagram](https://drive.google.com/file/d/1qSXJ8ne9ilTnkDDEiij6_XwdV6a40cty/view?usp=sharing)
+### 📂 Architectural Diagram
+
+[![Gildore Architecture Diagram](https://drive.google.com/thumbnail?id=1qSXJ8ne9ilTnkDDEiij6_XwdV6a40cty)](https://drive.google.com/file/d/1qSXJ8ne9ilTnkDDEiij6_XwdV6a40cty/view?usp=sharing)
+
+> 📎 Click the image to view full-size architectural diagram
 
 ## Core User Personas
 
