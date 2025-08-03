@@ -1,6 +1,6 @@
 # 🪙 Gildore — Tokenized Precious Metals on Solana
 
-**Turbin3 Builders Cohort — Assignment 2**  
+**Turbin3 Q3 Builders Cohort capstone**  
 A Solana-based digital savings platform enabling users to save in **tokenized gold and silver**, represented by **NFTs backed 1:1** with real-world precious metals.
 
 ---
