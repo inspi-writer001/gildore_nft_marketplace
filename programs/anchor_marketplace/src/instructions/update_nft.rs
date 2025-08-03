@@ -34,10 +34,6 @@ impl<'info> UpdateNFTMetadata<'info> {
         let authority = self.authority.to_account_info();
         let asset = self.asset.to_account_info();
         let system_prog = self.system_program.to_account_info();
-        // let collection = match &self.collection {
-        //     Some(exists) => Some(exists.to_account_info()),
-        //     None => None,
-        // };
 
         let mut builder = UpdateV1CpiBuilder::new(&mpl_program);
 
