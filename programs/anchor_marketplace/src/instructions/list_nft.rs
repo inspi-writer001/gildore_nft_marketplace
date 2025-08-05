@@ -25,11 +25,12 @@ pub struct ListNFT<'info> {
     #[account(
         constraint = asset.update_authority == UpdateAuthority::Address(collection.update_authority) @ MarketplaceError::CollectionMismatch,
     )]
-    pub collection: Account<'info, BaseCollectionV1>,
+    pub collection: Option<Account<'info, BaseCollectionV1>>,
 
     #[account(
-        seeds = [b"marketplace", marketplace.name.as_bytes()],
+        seeds = [b"marketplace", seller.key().as_ref()],
         bump = marketplace.bump,
+        constraint = seller.key() == marketplace.admin @ MarketplaceError::UnauthorizedCreator
     )]
     pub marketplace: Account<'info, Marketplace>,
 

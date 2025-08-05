@@ -129,13 +129,13 @@ describe("anchor_marketplace", () => {
           collection: null,
           creator: admin_wallet.publicKey
         })
-        .remainingAccounts([
-          {
-            pubkey: asset.publicKey,
-            isSigner: true,
-            isWritable: true
-          }
-        ])
+        // .remainingAccounts([
+        //   {
+        //     pubkey: asset.publicKey,
+        //     isSigner: true,
+        //     isWritable: true
+        //   }
+        // ])
         .signers([asset, admin_wallet])
         .rpc();
       console.log("Your transaction signature", tx);

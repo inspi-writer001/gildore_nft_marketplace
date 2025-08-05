@@ -16,9 +16,17 @@ pub struct CreateNFT<'info> {
 
     /// The MPL Core asset (NFT) to be created
     /// CHECK: This account will be created by MPL Core
-    #[account(mut)]
+    #[account(mut, signer)]
     pub asset: UncheckedAccount<'info>,
 
+    //   #[account(mut)]
+    // pub asset: Signer<'info>,
+
+    //  #[account(
+    //     mut,
+    //    signer
+    //   )]
+    //  pub asset: UncheckedAccount<'info>,
     /// The collection that this asset will belong to
     #[account(
         constraint = collection.update_authority == creator.key() @ MarketplaceError::NotUpdateAuthority,
