@@ -24,4 +24,6 @@ pub enum MarketplaceError {
     AssetNotInEscrow,
     #[msg("Asset Listing is not active")]
     ListingNotActive,
+    #[msg("You can't list an Item in this marketplace")]
+    UnauthorizedCreator,
 }

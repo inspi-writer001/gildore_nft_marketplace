@@ -23,11 +23,13 @@ pub struct CreateNFT<'info> {
     #[account(
         constraint = collection.update_authority == creator.key() @ MarketplaceError::NotUpdateAuthority,
     )]
-    pub collection: Account<'info, BaseCollectionV1>,
+    pub collection: Option<Account<'info, BaseCollectionV1>>,
 
     #[account(
-        seeds = [b"marketplace", marketplace.name.as_bytes()],
+        mut,
+        seeds = [b"marketplace", creator.key().as_ref()],
         bump = marketplace.bump,
+        constraint = marketplace.admin == creator.key() @ MarketplaceError::UnauthorizedCreator
     )]
     pub marketplace: Account<'info, Marketplace>,
 
@@ -39,17 +41,37 @@ pub struct CreateNFT<'info> {
 
 impl<'info> CreateNFT<'info> {
     pub fn create_nft(&mut self, params: CreateNFTParams) -> Result<()> {
+        // Store AccountInfo values in variables to extend their lifetime
+        let mpl_core_program_info = self.mpl_core_program.to_account_info();
+        let asset_info = self.asset.to_account_info();
+        let creator_info = self.creator.to_account_info();
+        let system_program_info = self.system_program.to_account_info();
+        let collection_info = self.collection.as_ref().map(|c| c.to_account_info());
         // Create the MPL Core asset
-        CreateV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
-            .asset(&self.asset.to_account_info())
-            .collection(Some(&self.collection.to_account_info()))
-            .payer(&self.creator.to_account_info())
-            .owner(Some(&self.creator.to_account_info()))
-            .update_authority(Some(&self.creator.to_account_info()))
-            .system_program(&self.system_program.to_account_info())
+        let mut builder = CreateV1CpiBuilder::new(&mpl_core_program_info);
+
+        builder
+            .asset(&asset_info)
+            .payer(&creator_info)
+            .owner(Some(&creator_info))
+            .update_authority(Some(&creator_info))
+            .system_program(&system_program_info)
             .name(params.name)
-            .uri(params.uri)
-            .invoke()?;
+            .collection(collection_info.as_ref())
+            .uri(params.uri);
+
+        // // Handle optional collection
+        // match &self.collection {
+        //     Some(collection_exists) => {
+        //         let collection_info: AccountInfo<'_> = collection_exists.to_account_info();
+        //         builder.collection(Some(&collection_info));
+        //     }
+        //     None => {
+        //         builder.collection(None);
+        //     }
+        // };
+
+        builder.invoke()?;
 
         Ok(())
     }

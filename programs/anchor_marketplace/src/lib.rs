@@ -9,7 +9,7 @@ pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("4csBn3dbZust2NjkoccmA4keZVTbfTnGn55MDA1y3GrY");
+declare_id!("8Z935UApS1fPcyhTQ42KzWvYW83j3wrCEmJCiwVz7EVC");
 
 #[program]
 pub mod anchor_marketplace {
@@ -20,6 +20,14 @@ pub mod anchor_marketplace {
             .handle(params.name, params.fee_bps, &ctx.bumps)?;
 
         Ok(())
+    }
+
+    pub fn create_nft(ctx: Context<CreateNFT>, params: CreateNFTParams) -> Result<()> {
+        ctx.accounts.create_nft(params)
+    }
+
+    pub fn modify_nft(ctx: Context<UpdateNFTMetadata>, params: UpdateNFTParams) -> Result<()> {
+        ctx.accounts.update_metadata(params)
     }
 
     pub fn list_nft(ctx: Context<ListNFT>, params: InitializListingeParams) -> Result<()> {
