@@ -68,17 +68,6 @@ impl<'info> CreateNFT<'info> {
             .collection(collection_info.as_ref())
             .uri(params.uri);
 
-        // // Handle optional collection
-        // match &self.collection {
-        //     Some(collection_exists) => {
-        //         let collection_info: AccountInfo<'_> = collection_exists.to_account_info();
-        //         builder.collection(Some(&collection_info));
-        //     }
-        //     None => {
-        //         builder.collection(None);
-        //     }
-        // };
-
         builder.invoke()?;
 
         Ok(())
