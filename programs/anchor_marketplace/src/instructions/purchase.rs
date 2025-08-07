@@ -3,7 +3,6 @@ use anchor_lang::system_program::{transfer, Transfer};
 use mpl_core::{
     accounts::{BaseAssetV1, BaseCollectionV1},
     instructions::TransferV1CpiBuilder,
-    ID as MPL_CORE_PROGRAM_ID,
 };
 
 use crate::error::MarketplaceError;
@@ -44,13 +43,12 @@ pub struct Purchase<'info> {
         mut,
         seeds = [b"listing", marketplace.key().as_ref(), asset.key().as_ref()],
         bump = listing.bump,
-        close = seller,
         constraint = listing.is_active @ MarketplaceError::ListingNotActive,
     )]
     pub listing: Account<'info, Listing>,
 
     #[account(
-        seeds = [b"marketplace", marketplace.name.as_str().as_bytes()],
+        seeds = [b"marketplace", seller.key().as_ref()],
         bump = marketplace.bump,
     )]
     pub marketplace: Account<'info, Marketplace>,
@@ -70,7 +68,7 @@ pub struct Purchase<'info> {
 
 impl<'info> Purchase<'info> {
     pub fn make_payment(&mut self) -> Result<()> {
-        let token_price = self.listing.price;
+        let token_price = self.listing.get_price_by_token_id();
         let marketplace_fee = self.marketplace.fee_bps as u64;
 
         // Calculate fee to transfer to marketplace treasury

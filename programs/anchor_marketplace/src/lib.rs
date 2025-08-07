@@ -30,8 +30,8 @@ pub mod anchor_marketplace {
         ctx.accounts.update_metadata(params)
     }
 
-    pub fn list_nft(ctx: Context<ListNFT>, params: InitializListingeParams) -> Result<()> {
-        ctx.accounts.initialize_listing(params.price, &ctx.bumps)?;
+    pub fn list_nft(ctx: Context<ListNFT>, params: InitializeListingParams) -> Result<()> {
+        ctx.accounts.initialize_listing(params, &ctx.bumps)?;
         ctx.accounts.list_nft()?;
         Ok(())
     }
@@ -47,9 +47,4 @@ pub mod anchor_marketplace {
 pub struct InitializeParams {
     name: String,
     fee_bps: u16,
-}
-
-#[derive(AnchorDeserialize, AnchorSerialize, PartialEq)]
-pub struct InitializListingeParams {
-    price: u64,
 }

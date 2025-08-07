@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+
 use mpl_core::{
     accounts::{BaseAssetV1, BaseCollectionV1},
     instructions::TransferV1CpiBuilder,
@@ -58,13 +59,14 @@ pub struct ListNFT<'info> {
 }
 
 impl<'info> ListNFT<'info> {
-    pub fn initialize_listing(&mut self, price: u64, bumps: &ListNFTBumps) -> Result<()> {
+    pub fn initialize_listing(&mut self, params: InitializeListingParams, bumps: &ListNFTBumps) -> Result<()> {
         self.listing.set_inner(Listing {
             seller: self.seller.key(),
             mint: self.asset.key(), 
-            price,
+            price: params.price,
             bump: bumps.listing,
             is_active: true,
+            token_id: params.token_id
         });
         Ok(())
     }
@@ -81,6 +83,12 @@ impl<'info> ListNFT<'info> {
 
         Ok(())
     }
+}
+
+#[derive(AnchorDeserialize, AnchorSerialize)]
+pub struct InitializeListingParams {
+    pub price: u64,
+    pub token_id: u16
 }
 
 // // Custom program wrapper for MPL Core

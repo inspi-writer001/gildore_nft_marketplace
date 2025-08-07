@@ -12,3 +12,6 @@ pub use create_nft::*;
 
 pub mod update_nft;
 pub use update_nft::*;
+
+pub mod redeem;
+pub use redeem::*;
