@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { AnchorMarketplace } from "../target/types/anchor_marketplace";
 import admin_wallet_file from "./wallets/admin-wallet.json";
+import user1_wallet_file from "./wallets/user-1-wallet.json";
 import { TOKEN_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
 
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
@@ -18,6 +19,10 @@ import { BN } from "bn.js";
 
 let admin_wallet = anchor.web3.Keypair.fromSecretKey(
   new Uint8Array(admin_wallet_file)
+);
+
+let user_1 = anchor.web3.Keypair.fromSecretKey(
+  new Uint8Array(user1_wallet_file)
 );
 
 describe("anchor_marketplace", () => {
@@ -150,7 +155,7 @@ describe("anchor_marketplace", () => {
     }
   });
 
-  it.only("should list Asset for sale in Marketplace", async () => {
+  it("should list Asset for sale in Marketplace", async () => {
     try {
       // asset = {
       //   publicKey: new anchor.web3.PublicKey(
@@ -175,6 +180,58 @@ describe("anchor_marketplace", () => {
       if (error.logs) {
         console.log(error.logs);
       }
+    }
+  });
+
+  it("should purchase Asset on sale in Marketplace", async () => {
+    try {
+      asset = {
+        publicKey: new anchor.web3.PublicKey(
+          "EcCEUsUb8ERyKHWCCih1hfRdZZ5uxCo8r2m3Erq42a2g"
+        ),
+      };
+      const tx = await program.methods
+        .purchaseNft()
+        .accounts({
+          asset: asset.publicKey,
+          collection: null,
+          seller: admin_wallet.publicKey,
+          buyer: user_1.publicKey,
+        })
+        .signers([user_1])
+        .rpc();
+      console.log("Your transaction signature", tx);
+    } catch (error) {
+      console.log(error);
+      if (error.logs) {
+        console.log(error.logs);
+      }
+    }
+  });
+
+  it.only("should burn purchased Asset for physical redemption", async () => {
+    try {
+      asset = {
+        publicKey: new anchor.web3.PublicKey(
+          "EcCEUsUb8ERyKHWCCih1hfRdZZ5uxCo8r2m3Erq42a2g"
+        ),
+      };
+      const tx = await program.methods
+        .redeemAsset()
+        .accounts({
+          asset: asset.publicKey,
+          owner: user_1.publicKey,
+          seller: admin_wallet.publicKey,
+        })
+        .signers([user_1])
+        .rpc();
+      console.log("Your transaction signature", tx);
+    } catch (error) {
+      console.log(error);
+      if (error.logs) {
+        console.log(error.logs);
+      }
+      throw Error("error occured");
     }
   });
 });

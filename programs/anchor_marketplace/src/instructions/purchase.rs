@@ -28,7 +28,7 @@ pub struct Purchase<'info> {
     pub asset: Account<'info, BaseAssetV1>,
 
     /// The collection that this asset belongs to
-    pub collection: Account<'info, BaseCollectionV1>,
+    pub collection: Option<Account<'info, BaseCollectionV1>>,
 
     /// CHECK: The escrow account that currently holds the asset
     #[account(

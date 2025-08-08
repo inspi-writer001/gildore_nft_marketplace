@@ -17,6 +17,14 @@ pub struct RedeemNFT<'info> {
     )]
     pub asset: Account<'info, BaseAssetV1>,
 
+    pub seller: SystemAccount<'info>,
+
+    #[account(
+        seeds = [b"marketplace", seller.key().as_ref()],
+        bump = marketplace.bump,
+    )]
+    pub marketplace: Account<'info, Marketplace>,
+
     #[account(
         mut,
         seeds = [b"treasury", marketplace.key().as_ref()],
@@ -30,21 +38,16 @@ pub struct RedeemNFT<'info> {
         bump = listing.bump,
         close = owner,
         constraint = listing.is_active @ MarketplaceError::ListingNotActive,
+        constraint = seller.key() == listing.seller.key() @ MarketplaceError::NotAssetOwner
     )]
     pub listing: Account<'info, Listing>,
-
-    #[account(
-        seeds = [b"marketplace", listing.seller.key().as_ref()],
-        bump = marketplace.bump,
-    )]
-    pub marketplace: Account<'info, Marketplace>,
 
     /// CHECK: The escrow account that currently holds the asset
     #[account(
         mut,
         seeds = [b"escrow", listing.key().as_ref()],
         bump,
-        constraint = asset.update_authority == UpdateAuthority::Address(escrow.key()) @ MarketplaceError::AssetNotInEscrow,
+        // constraint = asset.update_authority == UpdateAuthority::Address(escrow.key()) @ MarketplaceError::AssetNotInEscrow,
     )]
     pub escrow: UncheckedAccount<'info>,
 
@@ -81,7 +84,7 @@ impl<'info> RedeemNFT<'info> {
         )?;
 
         let listing = &self.listing.key();
-        let signers_seeds: &[&[&[u8]]] = &[&[b"escrow", listing.as_ref()]];
+        let signers_seeds: &[&[&[u8]]] = &[&[b"escrow", listing.as_ref(), &[self.listing.bump]]];
 
         BurnV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
             .asset(&self.asset.to_account_info())

@@ -41,6 +41,10 @@ pub mod anchor_marketplace {
         ctx.accounts.transfer_nft()?;
         Ok(())
     }
+
+    pub fn redeem_asset(ctx: Context<RedeemNFT>) -> Result<()> {
+        ctx.accounts.redeem_nft()
+    }
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize, PartialEq)]
