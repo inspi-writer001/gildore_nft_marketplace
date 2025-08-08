@@ -48,6 +48,7 @@ pub struct RedeemNFT<'info> {
     )]
     pub escrow: UncheckedAccount<'info>,
 
+    /// CHECK: MPL Program ID
     #[account(address = mpl_core::ID)]
     pub mpl_core_program: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,

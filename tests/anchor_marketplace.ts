@@ -8,12 +8,13 @@ import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
   createGenericFile,
   createSignerFromKeypair,
-  signerIdentity
+  signerIdentity,
 } from "@metaplex-foundation/umi";
 import { irysUploader } from "@metaplex-foundation/umi-uploader-irys";
 import { readFile } from "fs/promises";
 
 import path from "path";
+import { BN } from "bn.js";
 
 let admin_wallet = anchor.web3.Keypair.fromSecretKey(
   new Uint8Array(admin_wallet_file)
@@ -37,28 +38,30 @@ describe("anchor_marketplace", () => {
   umi.use(irysUploader());
   umi.use(signerIdentity(signer));
 
+  let asset: anchor.web3.Keypair;
+
+  let marketplace = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("marketplace"), admin_wallet.publicKey.toBuffer()],
+    program.programId
+  )[0];
+  let treasury = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("treasury"), marketplace.toBuffer()],
+    program.programId
+  )[0];
+
   it("Is initialized!", async () => {
     try {
       let name_of_program = "Gildore Marketplace";
-
-      let marketplace = anchor.web3.PublicKey.findProgramAddressSync(
-        [Buffer.from("marketplace"), admin_wallet.publicKey.toBuffer()],
-        program.programId
-      )[0];
-      let treasury = anchor.web3.PublicKey.findProgramAddressSync(
-        [Buffer.from("treasury"), marketplace.toBuffer()],
-        program.programId
-      )[0];
 
       console.log(treasury);
       const tx = await program.methods
         .initialize({
           feeBps: 100,
-          name: name_of_program
+          name: name_of_program,
         })
         .accounts({
           admin: admin_wallet.publicKey,
-          tokenProgram: TOKEN_PROGRAM_ID
+          tokenProgram: TOKEN_PROGRAM_ID,
           // @ts-ignore
           // treasury
         })
@@ -83,16 +86,16 @@ describe("anchor_marketplace", () => {
     }
   });
 
-  it.only("should create asset", async () => {
+  it("should create asset", async () => {
     try {
-      let asset = anchor.web3.Keypair.generate();
+      asset = anchor.web3.Keypair.generate();
       console.log("asset: ", asset.publicKey.toBase58());
       console.log("admin: ", admin_wallet.publicKey.toBase58());
       const filePath = path.join(__dirname, "silver_image.jpg");
       const file = await readFile(filePath);
       //2. Convert image to generic file.
       const converted_file = createGenericFile(file, "silver_image.jpg", {
-        contentType: "img/jpg"
+        contentType: "img/jpg",
       });
       //3. Upload image
       const [my_uri] = await umi.uploader.upload([converted_file]);
@@ -105,29 +108,29 @@ describe("anchor_marketplace", () => {
         image: my_uri,
         attributes: [
           { trait_type: "purity", value: "999" },
-          { trait_type: "weight", value: "125 KG" }
+          { trait_type: "weight", value: "125 KG" },
         ],
         properties: {
           files: [
             {
               type: "image/jpg",
-              uri: my_uri
-            }
-          ]
+              uri: my_uri,
+            },
+          ],
         },
-        creators: [admin_wallet.publicKey.toBase58()]
+        creators: [admin_wallet.publicKey.toBase58()],
       };
       const metadataUri = await umi.uploader.uploadJson(metadata);
 
       const tx = await program.methods
         .createNft({
           name: "Silver Bar",
-          uri: metadataUri
+          uri: metadataUri,
         })
         .accounts({
           asset: asset.publicKey,
           collection: null,
-          creator: admin_wallet.publicKey
+          creator: admin_wallet.publicKey,
         })
         // .remainingAccounts([
         //   {
@@ -137,6 +140,34 @@ describe("anchor_marketplace", () => {
         //   }
         // ])
         .signers([asset, admin_wallet])
+        .rpc();
+      console.log("Your transaction signature", tx);
+    } catch (error) {
+      console.log(error);
+      if (error.logs) {
+        console.log(error.logs);
+      }
+    }
+  });
+
+  it.only("should list Asset for sale in Marketplace", async () => {
+    try {
+      // asset = {
+      //   publicKey: new anchor.web3.PublicKey(
+      //     "EcCEUsUb8ERyKHWCCih1hfRdZZ5uxCo8r2m3Erq42a2g"
+      //   ),
+      // };
+      const tx = await program.methods
+        .listNft({
+          tokenId: 20051,
+          price: new BN(500_000_000),
+        })
+        .accounts({
+          asset: asset.publicKey,
+          collection: null,
+          seller: admin_wallet.publicKey,
+        })
+        .signers([admin_wallet])
         .rpc();
       console.log("Your transaction signature", tx);
     } catch (error) {
