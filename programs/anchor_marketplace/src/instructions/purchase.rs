@@ -6,7 +6,6 @@ use mpl_core::{
     accounts::{BaseAssetV1, BaseCollectionV1},
     instructions::TransferV1CpiBuilder,
 };
-use mpl_core::{BasePlugin, PermanentBurnDelegatePlugin};
 
 use crate::error::MarketplaceError;
 use crate::{Listing, Marketplace};
@@ -114,8 +113,6 @@ impl<'info> Purchase<'info> {
     }
 
     pub fn transfer_nft(&mut self) -> Result<()> {
-        // use escrow seeds since escrow is now the new owner
-
         let listing_key = &self.listing.key();
         let signers_seeds: &[&[&[u8]]] = &[&[
             b"escrow",
@@ -130,6 +127,7 @@ impl<'info> Purchase<'info> {
             &[self.listing.bump],
         ]];
 
+        // note that I'm passing authority on this CPIBuilder because The owner is now expected to be escrow  since the asset was TRANSFERRED to escrow, escrow is the authority (owner) of the asset, it's not delegated so escrow can sign on behalf of this tx and as the authority of the asset
         // Transfer the MPL Core asset from escrow to buyer
         TransferV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
             .asset(&self.asset.to_account_info())
@@ -139,6 +137,7 @@ impl<'info> Purchase<'info> {
             .system_program(Some(&self.system_program.to_account_info()))
             .invoke_signed(signers_seeds)?;
 
+        // note that I'm not passing authority because Listing isnt the authority (owner) of the asset, it was delegated to listing so listing can sign on behalf of this tx
         UpdatePluginV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
             .asset(&self.asset.to_account_info())
             .payer(&self.buyer.to_account_info())

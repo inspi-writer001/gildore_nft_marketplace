@@ -2,7 +2,11 @@ use anchor_lang::{
     prelude::*,
     system_program::{transfer, Transfer},
 };
-use mpl_core::{accounts::BaseAssetV1, instructions::BurnV1CpiBuilder, types::UpdateAuthority};
+use mpl_core::{
+    accounts::BaseAssetV1,
+    instructions::{BurnV1CpiBuilder, UpdatePluginV1CpiBuilder},
+    types::{FreezeDelegate, Plugin, UpdateAuthority},
+};
 
 use crate::{Listing, Marketplace, MarketplaceError};
 
@@ -82,18 +86,32 @@ impl<'info> RedeemNFT<'info> {
             CpiContext::new(self.system_program.to_account_info(), cpi_account_fee_ix),
             half_amount,
         )?;
+        let marketplace_key = &self.marketplace.key();
+        let asset_key = &self.asset.key();
 
         let signers_seeds: &[&[&[u8]]] = &[&[
-            b"escrow",
-            &self.listing.key().to_bytes(),
-            &[self.listing.escrow_bump],
+            b"listing",
+            &marketplace_key.as_ref(),
+            &asset_key.as_ref(),
+            &[self.listing.bump],
         ]];
 
+        // Thaw asset - unfreeze asset
+        // note that I'm not passing authority because Listing isnt the authority (owner) of the asset, it was delegated to listing so listing can sign on behalf of this tx
+        UpdatePluginV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
+            .asset(&self.asset.to_account_info())
+            .payer(&self.owner.to_account_info())
+            .plugin(Plugin::FreezeDelegate(FreezeDelegate { frozen: false }))
+            .system_program(&self.system_program.to_account_info())
+            .invoke_signed(signers_seeds)?;
+
+        // Burning the asset
+        // note that I'm not passing authority because Listing isnt the authority (owner) of the asset, it was delegated to listing so listing can sign on behalf of this tx
         BurnV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
             .asset(&self.asset.to_account_info())
             .collection(None)
             .payer(&self.owner.to_account_info())
-            .authority(Some(&self.escrow.to_account_info()))
+            .system_program(Some(&self.system_program.to_account_info()))
             .invoke_signed(&signers_seeds)?;
 
         Ok(())

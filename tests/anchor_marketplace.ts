@@ -212,7 +212,7 @@ describe("anchor_marketplace", () => {
     }
   });
 
-  it.skip("should burn purchased Asset for physical redemption", async () => {
+  it("should burn purchased Asset for physical redemption", async () => {
     try {
       // asset = {
       //   publicKey: new anchor.web3.PublicKey(

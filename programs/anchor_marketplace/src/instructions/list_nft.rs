@@ -4,12 +4,10 @@ use mpl_core::{
     accounts::{BaseAssetV1, BaseCollectionV1},
     instructions::{
         AddPluginV1CpiBuilder, ApprovePluginAuthorityV1CpiBuilder, TransferV1CpiBuilder,
-        UpdateV1CpiBuilder,
     },
     types::{
         BurnDelegate, FreezeDelegate, Plugin, PluginAuthority, TransferDelegate, UpdateAuthority,
     },
-    BurnDelegatePlugin, TransferDelegatePlugin,
 };
 
 pub use crate::error::MarketplaceError;
@@ -84,14 +82,7 @@ impl<'info> ListNFT<'info> {
 
     pub fn list_nft(&mut self) -> Result<()> {
         // Transfer the MPL Core asset to the escrow account
-
-        // let signers_seeds: &[&[&[u8]]] = &[&[
-        //     b"listing",
-        //     &self.marketplace.key().to_bytes(),
-        //     &self.asset.key().to_bytes(),
-        //     &[self.listing.bump],
-        // ]];
-
+        // note that I'm passing authority on all CPIBuilders because The owner is the authority (owner) of the asset, it's not delegated so owner can sign on behalf of this tx and as the authority of the asset
         // add TransferDelegate Plugin
         AddPluginV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
             .authority(Some(&self.seller.to_account_info()))

@@ -1,9 +1,5 @@
 use anchor_lang::prelude::*;
-use mpl_core::{
-    accounts::{BaseAssetV1, BaseCollectionV1},
-    instructions::{CreateV1CpiBuilder, UpdateV1CpiBuilder},
-    types::{DataState, Plugin, PluginAuthority, UpdateAuthority},
-};
+use mpl_core::{accounts::BaseCollectionV1, instructions::CreateV1CpiBuilder};
 
 pub use crate::error::MarketplaceError;
 use crate::Marketplace;
