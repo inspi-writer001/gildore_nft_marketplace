@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer};
-use mpl_core::types::PermanentBurnDelegate;
+use mpl_core::instructions::UpdatePluginV1CpiBuilder;
+use mpl_core::types::{FreezeDelegate, PermanentBurnDelegate, Plugin};
 use mpl_core::{
     accounts::{BaseAssetV1, BaseCollectionV1},
     instructions::TransferV1CpiBuilder,
@@ -122,6 +123,13 @@ impl<'info> Purchase<'info> {
             &[self.listing.escrow_bump],
         ]];
 
+        let listing_seeds: &[&[&[u8]]] = &[&[
+            b"listing",
+            &self.marketplace.key().to_bytes(),
+            &self.asset.key().to_bytes(),
+            &[self.listing.bump],
+        ]];
+
         // Transfer the MPL Core asset from escrow to buyer
         TransferV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
             .asset(&self.asset.to_account_info())
@@ -131,6 +139,12 @@ impl<'info> Purchase<'info> {
             .system_program(Some(&self.system_program.to_account_info()))
             .invoke_signed(signers_seeds)?;
 
+        UpdatePluginV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
+            .asset(&self.asset.to_account_info())
+            .payer(&self.buyer.to_account_info())
+            .plugin(Plugin::FreezeDelegate(FreezeDelegate { frozen: true }))
+            .system_program(&self.system_program.to_account_info())
+            .invoke_signed(listing_seeds)?;
         Ok(())
     }
 }
