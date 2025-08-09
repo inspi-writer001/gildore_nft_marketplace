@@ -46,7 +46,7 @@ pub struct RedeemNFT<'info> {
     #[account(
         mut,
         seeds = [b"escrow", listing.key().as_ref()],
-        bump,
+        bump = listing.escrow_bump,
         // constraint = asset.update_authority == UpdateAuthority::Address(escrow.key()) @ MarketplaceError::AssetNotInEscrow,
     )]
     pub escrow: UncheckedAccount<'info>,
@@ -83,8 +83,11 @@ impl<'info> RedeemNFT<'info> {
             half_amount,
         )?;
 
-        let listing = &self.listing.key();
-        let signers_seeds: &[&[&[u8]]] = &[&[b"escrow", listing.as_ref(), &[self.listing.bump]]];
+        let signers_seeds: &[&[&[u8]]] = &[&[
+            b"escrow",
+            &self.listing.key().to_bytes(),
+            &[self.listing.escrow_bump],
+        ]];
 
         BurnV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
             .asset(&self.asset.to_account_info())

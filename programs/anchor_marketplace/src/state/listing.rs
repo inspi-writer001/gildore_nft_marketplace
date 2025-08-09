@@ -9,6 +9,7 @@ pub struct Listing {
     pub bump: u8,
     pub token_id: u16,
     pub is_active: bool,
+    pub escrow_bump: u8,
 }
 impl Listing {
     pub fn get_price_by_token_id(&self) -> u64 {

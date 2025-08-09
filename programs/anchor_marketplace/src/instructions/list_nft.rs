@@ -2,8 +2,14 @@ use anchor_lang::prelude::*;
 
 use mpl_core::{
     accounts::{BaseAssetV1, BaseCollectionV1},
-    instructions::TransferV1CpiBuilder,
-    types::UpdateAuthority,
+    instructions::{
+        AddPluginV1CpiBuilder, ApprovePluginAuthorityV1CpiBuilder, TransferV1CpiBuilder,
+        UpdateV1CpiBuilder,
+    },
+    types::{
+        BurnDelegate, FreezeDelegate, Plugin, PluginAuthority, TransferDelegate, UpdateAuthority,
+    },
+    BurnDelegatePlugin, TransferDelegatePlugin,
 };
 
 pub use crate::error::MarketplaceError;
@@ -46,9 +52,9 @@ pub struct ListNFT<'info> {
 
     /// CHECK: This is the PDA that will receive the asset
     #[account(
+        mut,
         seeds = [b"escrow", listing.key().as_ref()],
         bump,
-        
     )]
     pub escrow: UncheckedAccount<'info>,
 
@@ -59,20 +65,97 @@ pub struct ListNFT<'info> {
 }
 
 impl<'info> ListNFT<'info> {
-    pub fn initialize_listing(&mut self, params: InitializeListingParams, bumps: &ListNFTBumps) -> Result<()> {
+    pub fn initialize_listing(
+        &mut self,
+        params: InitializeListingParams,
+        bumps: &ListNFTBumps,
+    ) -> Result<()> {
         self.listing.set_inner(Listing {
             seller: self.seller.key(),
-            mint: self.asset.key(), 
+            mint: self.asset.key(),
             price: params.price,
             bump: bumps.listing,
+            escrow_bump: bumps.escrow,
             is_active: true,
-            token_id: params.token_id
+            token_id: params.token_id,
         });
         Ok(())
     }
 
     pub fn list_nft(&mut self) -> Result<()> {
         // Transfer the MPL Core asset to the escrow account
+
+        // let signers_seeds: &[&[&[u8]]] = &[&[
+        //     b"listing",
+        //     &self.marketplace.key().to_bytes(),
+        //     &self.asset.key().to_bytes(),
+        //     &[self.listing.bump],
+        // ]];
+
+        // add TransferDelegate Plugin
+        AddPluginV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
+            .authority(Some(&self.seller.to_account_info()))
+            .asset(&self.asset.to_account_info())
+            .payer(&self.seller.to_account_info())
+            .plugin(Plugin::TransferDelegate(TransferDelegate {}))
+            .system_program(&self.system_program.to_account_info())
+            .invoke()?;
+
+        // Approve TransferDelegate Plugin to listing
+        ApprovePluginAuthorityV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
+            .new_authority(PluginAuthority::Address {
+                address: self.listing.key(),
+            })
+            .authority(Some(&self.seller.to_account_info()))
+            .asset(&self.asset.to_account_info())
+            .payer(&self.seller.to_account_info())
+            .plugin_type(mpl_core::types::PluginType::TransferDelegate)
+            .system_program(&self.system_program.to_account_info())
+            .invoke()?;
+
+        // add BurnDelegate Plugin
+        AddPluginV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
+            .authority(Some(&self.seller.to_account_info()))
+            .asset(&self.asset.to_account_info())
+            .payer(&self.seller.to_account_info())
+            .plugin(Plugin::BurnDelegate(BurnDelegate {}))
+            .system_program(&self.system_program.to_account_info())
+            .invoke()?;
+
+        // approve BurnDelegate Plugin to listing
+        ApprovePluginAuthorityV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
+            .new_authority(PluginAuthority::Address {
+                address: self.listing.key(),
+            })
+            .authority(Some(&self.seller.to_account_info()))
+            .asset(&self.asset.to_account_info())
+            .payer(&self.seller.to_account_info())
+            .plugin_type(mpl_core::types::PluginType::BurnDelegate)
+            .system_program(&self.system_program.to_account_info())
+            .invoke()?;
+
+        // add Freeze Delegate
+        AddPluginV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
+            .authority(Some(&self.seller.to_account_info()))
+            .asset(&self.asset.to_account_info())
+            .payer(&self.seller.to_account_info())
+            .plugin(Plugin::FreezeDelegate(FreezeDelegate { frozen: false }))
+            .system_program(&self.system_program.to_account_info())
+            .invoke()?;
+
+        // Approve Freeze Delegate to listing
+        ApprovePluginAuthorityV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
+            .new_authority(PluginAuthority::Address {
+                address: self.listing.key(),
+            })
+            .authority(Some(&self.seller.to_account_info()))
+            .asset(&self.asset.to_account_info())
+            .payer(&self.seller.to_account_info())
+            .plugin_type(mpl_core::types::PluginType::FreezeDelegate)
+            .system_program(&self.system_program.to_account_info())
+            .invoke()?;
+
+        // Transfer token to Escrow -> Now Listing can make Tx on behalf of Escrow for the Asset
         TransferV1CpiBuilder::new(&self.mpl_core_program.to_account_info())
             .asset(&self.asset.to_account_info())
             .payer(&self.seller.to_account_info())
@@ -88,15 +171,5 @@ impl<'info> ListNFT<'info> {
 #[derive(AnchorDeserialize, AnchorSerialize)]
 pub struct InitializeListingParams {
     pub price: u64,
-    pub token_id: u16
+    pub token_id: u16,
 }
-
-// // Custom program wrapper for MPL Core
-// #[derive(Clone)]
-// pub struct MplCore;
-
-// impl anchor_lang::Id for MplCore {
-//     fn id() -> Pubkey {
-//         MPL_CORE_PROGRAM_ID.try_into().unwrap()
-//     }
-// }

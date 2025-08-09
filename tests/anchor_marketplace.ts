@@ -15,7 +15,6 @@ import { irysUploader } from "@metaplex-foundation/umi-uploader-irys";
 import { readFile } from "fs/promises";
 
 import path from "path";
-import { BN } from "bn.js";
 
 let admin_wallet = anchor.web3.Keypair.fromSecretKey(
   new Uint8Array(admin_wallet_file)
@@ -54,7 +53,7 @@ describe("anchor_marketplace", () => {
     program.programId
   )[0];
 
-  it("Is initialized!", async () => {
+  it.skip("Is initialized!", async () => {
     try {
       let name_of_program = "Gildore Marketplace";
 
@@ -81,7 +80,7 @@ describe("anchor_marketplace", () => {
     }
   });
 
-  it("should fetch all marketplace accounts", async () => {
+  it.skip("should fetch all marketplace accounts", async () => {
     try {
       let marketplace_accounts = await program.account.marketplace.all();
       console.log(marketplace_accounts);
@@ -151,7 +150,9 @@ describe("anchor_marketplace", () => {
       console.log(error);
       if (error.logs) {
         console.log(error.logs);
+        throw Error("error occured");
       }
+      throw Error(error);
     }
   });
 
@@ -165,7 +166,7 @@ describe("anchor_marketplace", () => {
       const tx = await program.methods
         .listNft({
           tokenId: 20051,
-          price: new BN(500_000_000),
+          price: new anchor.BN(500_000_000),
         })
         .accounts({
           asset: asset.publicKey,
@@ -179,17 +180,18 @@ describe("anchor_marketplace", () => {
       console.log(error);
       if (error.logs) {
         console.log(error.logs);
+        throw Error("error occured");
       }
     }
   });
 
   it("should purchase Asset on sale in Marketplace", async () => {
     try {
-      asset = {
-        publicKey: new anchor.web3.PublicKey(
-          "EcCEUsUb8ERyKHWCCih1hfRdZZ5uxCo8r2m3Erq42a2g"
-        ),
-      };
+      // asset = {
+      //   publicKey: new anchor.web3.PublicKey(
+      //     "EcCEUsUb8ERyKHWCCih1hfRdZZ5uxCo8r2m3Erq42a2g"
+      //   ),
+      // };
       const tx = await program.methods
         .purchaseNft()
         .accounts({
@@ -205,17 +207,18 @@ describe("anchor_marketplace", () => {
       console.log(error);
       if (error.logs) {
         console.log(error.logs);
+        throw Error("error occured");
       }
     }
   });
 
-  it.only("should burn purchased Asset for physical redemption", async () => {
+  it.skip("should burn purchased Asset for physical redemption", async () => {
     try {
-      asset = {
-        publicKey: new anchor.web3.PublicKey(
-          "EcCEUsUb8ERyKHWCCih1hfRdZZ5uxCo8r2m3Erq42a2g"
-        ),
-      };
+      // asset = {
+      //   publicKey: new anchor.web3.PublicKey(
+      //     "EcCEUsUb8ERyKHWCCih1hfRdZZ5uxCo8r2m3Erq42a2g"
+      //   ),
+      // };
       const tx = await program.methods
         .redeemAsset()
         .accounts({

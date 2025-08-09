@@ -62,7 +62,7 @@ impl<'info> CreateNFT<'info> {
             .asset(&asset_info)
             .payer(&creator_info)
             .owner(Some(&creator_info))
-            .update_authority(Some(&creator_info))
+            .authority(Some(&creator_info))
             .system_program(&system_program_info)
             .name(params.name)
             .collection(collection_info.as_ref())

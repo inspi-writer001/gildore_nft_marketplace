@@ -1,9 +1,11 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer};
+use mpl_core::types::PermanentBurnDelegate;
 use mpl_core::{
     accounts::{BaseAssetV1, BaseCollectionV1},
     instructions::TransferV1CpiBuilder,
 };
+use mpl_core::{BasePlugin, PermanentBurnDelegatePlugin};
 
 use crate::error::MarketplaceError;
 use crate::{Listing, Marketplace};
@@ -111,11 +113,13 @@ impl<'info> Purchase<'info> {
     }
 
     pub fn transfer_nft(&mut self) -> Result<()> {
-        // Create signer seeds for the escrow account
-        let escrow_seeds: &[&[&[u8]]] = &[&[
+        // use escrow seeds since escrow is now the new owner
+
+        let listing_key = &self.listing.key();
+        let signers_seeds: &[&[&[u8]]] = &[&[
             b"escrow",
-            &self.listing.key().to_bytes(),
-            &[self.listing.bump],
+            &listing_key.as_ref(),
+            &[self.listing.escrow_bump],
         ]];
 
         // Transfer the MPL Core asset from escrow to buyer
@@ -125,18 +129,8 @@ impl<'info> Purchase<'info> {
             .authority(Some(&self.escrow.to_account_info()))
             .new_owner(&self.buyer.to_account_info())
             .system_program(Some(&self.system_program.to_account_info()))
-            .invoke_signed(escrow_seeds)?;
+            .invoke_signed(signers_seeds)?;
 
         Ok(())
     }
 }
-
-// // Custom program wrapper for MPL Core
-// #[derive(Clone)]
-// pub struct MplCore;
-
-// impl anchor_lang::Id for MplCore {
-//     fn id() -> Pubkey {
-//         MPL_CORE_PROGRAM_ID.try_into().unwrap()
-//     }
-// }
